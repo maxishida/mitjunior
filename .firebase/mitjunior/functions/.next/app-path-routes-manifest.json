@@ -1,0 +1,17 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/auth/session/route": "/api/auth/session",
+  "/api/users/route": "/api/users",
+  "/admin/courses/edit/[id]/page": "/admin/courses/edit/[id]",
+  "/admin/courses/page": "/admin/courses",
+  "/admin/page": "/admin",
+  "/admin/posts/page": "/admin/posts",
+  "/admin/users/page": "/admin/users",
+  "/admin/videos/page": "/admin/videos",
+  "/chat/page": "/chat",
+  "/course/[id]/page": "/course/[id]",
+  "/feed/page": "/feed",
+  "/login/page": "/login",
+  "/page": "/",
+  "/signup/page": "/signup"
+}

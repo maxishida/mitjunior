@@ -1,0 +1,12 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow sensitive areas
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /firebase-debug.log
+
+# Sitemaps
+Sitemap: https://comunidadeflix.com/sitemap.xml
