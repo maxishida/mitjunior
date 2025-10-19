@@ -50,12 +50,12 @@ export default function PerfilPage() {
                       className="rounded-circle me-3 d-flex align-items-center justify-content-center bg-success"
                       style={{ width: '80px', height: '80px', fontSize: '32px', fontWeight: 'bold' }}
                     >
-                      {(user.displayName || user.email || 'U')[0].toUpperCase()}
+                      {(user?.displayName || user?.email || 'U')?.[0]?.toUpperCase() || 'U'}
                     </div>
                   )}
                   <div>
-                    <h2 className="h4 mb-1">{user.displayName || 'Usuário'}</h2>
-                    <p className="text-muted mb-0">{user.email}</p>
+                    <h2 className="h4 mb-1">{user?.displayName || 'Usuário'}</h2>
+                    <p className="text-muted mb-0">{user?.email}</p>
                   </div>
                 </div>
               </div>

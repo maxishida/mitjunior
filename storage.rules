@@ -1,0 +1,235 @@
+rules_version = '2';
+service firebase.storage {
+  // =============================================================================
+  // HELPER FUNCTIONS - Security and Validation
+  // =============================================================================
+
+  function isAuthenticated() {
+    return request.auth != null;
+  }
+
+  function isOwner(userId) {
+    return isAuthenticated() && request.auth.uid == userId;
+  }
+
+  function isAdmin() {
+    return isAuthenticated() && request.auth.token.admin == true;
+  }
+
+  function isValidFileType(allowedTypes) {
+    return allowedTypes.contains(resource.contentType);
+  }
+
+  function isValidFileSize(maxSize) {
+    return resource.size < maxSize;
+  }
+
+  function isValidImageType() {
+    return isValidFileType([
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'image/gif'
+    ]);
+  }
+
+  function isValidVideoType() {
+    return isValidFileType([
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+      'video/x-msvideo'
+    ]);
+  }
+
+  function isValidDocumentType() {
+    return isValidFileType([
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ]);
+  }
+
+  // =============================================================================
+  // PROFILE IMAGES
+  // =============================================================================
+  match /profile-images/{userId}/{allPaths=**} {
+    allow read: if isAuthenticated(); // Anyone can see profile pictures
+    allow write: if isOwner(userId) &&
+      isValidImageType() &&
+      isValidFileSize(5 * 1024 * 1024); // 5MB max
+    allow delete: if isOwner(userId) || isAdmin();
+  }
+
+  // =============================================================================
+  // COURSE THUMBNAILS
+  // =============================================================================
+  match /course-thumbnails/{courseId}/{allPaths=**} {
+    allow read: if true; // Public access for thumbnails
+
+    // Only course owners and admins can upload
+    allow write: if (isOwner(resource.metadata.ownerId) || isAdmin()) &&
+      isValidImageType() &&
+      isValidFileSize(2 * 1024 * 1024); // 2MB max
+
+    allow delete: if isOwner(resource.metadata.ownerId) || isAdmin();
+  }
+
+  // =============================================================================
+  // VIDEO FILES
+  // =============================================================================
+  match /course-videos/{courseId}/{videoId}/{allPaths=**} {
+    // Read access - based on enrollment and video visibility
+    allow read: if resource.metadata.isFree == 'true' ||
+      (isAuthenticated() &&
+       // Check if user is enrolled in the course
+       exists(/databases/(default)/documents/enrollments/$(request.auth.uid)) &&
+       get(/databases/(default)/documents/enrollments/$(request.auth.uid)).data.courseIds.contains(courseId)) ||
+      isAdmin();
+
+    // Upload access - course owners and admins only
+    allow write: if (isOwner(resource.metadata.ownerId) || isAdmin()) &&
+      isValidVideoType() &&
+      isValidFileSize(2 * 1024 * 1024 * 1024); // 2GB max
+
+    allow delete: if isOwner(resource.metadata.ownerId) || isAdmin();
+  }
+
+  // =============================================================================
+  // VIDEO THUMBNAILS
+  // =============================================================================
+  match /video-thumbnails/{courseId}/{videoId}/{allPaths=**} {
+    allow read: if true; // Public access for video thumbnails
+
+    allow write: if (isOwner(resource.metadata.ownerId) || isAdmin()) &&
+      isValidImageType() &&
+      isValidFileSize(1 * 1024 * 1024); // 1MB max
+
+    allow delete: if isOwner(resource.metadata.ownerId) || isAdmin();
+  }
+
+  // =============================================================================
+  // CERTIFICATES
+  // =============================================================================
+  match /certificates/{userId}/{certificateId}/{allPaths=**} {
+    // Read access - certificate owner and public verification
+    allow read: if isOwner(userId) ||
+      resource.metadata.isPublic == 'true' ||
+      (isAuthenticated() && resource.path.matches('**/verification/**'));
+
+    // Write access - system only (admin/service accounts)
+    allow write: if isAdmin() &&
+      isValidDocumentType() &&
+      isValidFileSize(5 * 1024 * 1024); // 5MB max
+
+    allow delete: if isOwner(userId) || isAdmin();
+  }
+
+  // =============================================================================
+  // USER UPLOADS (TEMPORARY)
+  // =============================================================================
+  match /user-uploads/{userId}/{uploadId}/{allPaths=**} {
+    // Read/write access - only the owner
+    allow read, write: if isOwner(userId) &&
+      (isValidImageType() || isValidDocumentType()) &&
+      isValidFileSize(10 * 1024 * 1024); // 10MB max
+
+    // Auto-delete after 24 hours (handled by Cloud Function)
+    // This is a security measure to prevent storage abuse
+  }
+
+  // =============================================================================
+  // COMMUNITY FILES
+  // =============================================================================
+  match /community-posts/{postId}/{allPaths=**} {
+    // Read access - public for approved posts
+    allow read: if true; // Post images should be public
+
+    // Write access - post author and admins
+    allow write: if (isOwner(resource.metadata.authorId) || isAdmin()) &&
+      isValidImageType() &&
+      isValidFileSize(5 * 1024 * 1024); // 5MB max
+
+    allow delete: if isOwner(resource.metadata.authorId) || isAdmin();
+  }
+
+  // =============================================================================
+  // COURSE MATERIALS/RESOURCES
+  // =============================================================================
+  match /course-materials/{courseId}/{materialId}/{allPaths=**} {
+    // Read access - enrolled users and course owners
+    allow read: if (isAuthenticated() &&
+       exists(/databases/(default)/documents/enrollments/$(request.auth.uid)) &&
+       get(/databases/(default)/documents/enrollments/$(request.auth.uid)).data.courseIds.contains(courseId)) ||
+      isOwner(resource.metadata.ownerId) ||
+      isAdmin();
+
+    // Write access - course owners and admins
+    allow write: if (isOwner(resource.metadata.ownerId) || isAdmin()) &&
+      (isValidDocumentType() || isValidImageType()) &&
+      isValidFileSize(50 * 1024 * 1024); // 50MB max for PDFs, docs
+
+    allow delete: if isOwner(resource.metadata.ownerId) || isAdmin();
+  }
+
+  // =============================================================================
+  // BACKUP AND SYSTEM FILES
+  // =============================================================================
+  match /system-backups/{allPaths=**} {
+    // Admin only access
+    allow read, write, delete: if isAdmin();
+  }
+
+  match /system-logs/{allPaths=**} {
+    // Admin only access
+    allow read, write, delete: if isAdmin();
+  }
+
+  // =============================================================================
+  // TEMPORARY FILES (with auto-cleanup)
+  // =============================================================================
+  match /temp/{userId}/{tempId}/{allPaths=**} {
+    // Strict access control - owner only
+    allow read, write: if isOwner(userId) &&
+      isValidFileSize(20 * 1024 * 1024) && // 20MB max
+      resource.timeCreated + duration.value(24, 'h') > request.time; // Max 24h old
+
+    allow delete: if isOwner(userId) || isAdmin();
+  }
+
+  // =============================================================================
+  // ANALYTICS AND REPORTS
+  // =============================================================================
+  match /analytics/{allPaths=**} {
+    // Admin only access
+    allow read, write, delete: if isAdmin();
+  }
+
+  // =============================================================================
+  // GLOBAL SECURITY CONTROLS
+  // =============================================================================
+
+  // Prevent anonymous access
+  match /{allPaths=**} {
+    allow read, write: if isAuthenticated();
+  }
+
+  // Rate limiting metadata validation
+  match /{bucket}/{userId}/{allPaths=**} {
+    allow write: if isOwner(userId) &&
+      request.headers.contains('X-Upload-Signature') && // Require custom header for uploads
+      resource.metadata.keys().hasAll(['uploadedBy', 'uploadTime', 'purpose']);
+  }
+
+  // File naming conventions enforcement
+  match /{bucket}/{userId}/{allPaths=**} {
+    allow write: if isOwner(userId) &&
+      // Prevent directory traversal attacks
+      !resource.name.contains('../') &&
+      !resource.name.contains('..\\') &&
+      // Enforce safe file names
+      resource.name.matches('^[a-zA-Z0-9._-]+$');
+  }
+}

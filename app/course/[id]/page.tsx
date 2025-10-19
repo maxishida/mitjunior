@@ -49,7 +49,7 @@ export default function CoursePage({ params }: PageProps) {
                     const videosList = videosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Video));
                     setVideos(videosList);
                     if (videosList.length > 0) {
-                        setSelectedVideo(videosList[0]);
+                        setSelectedVideo(videosList[0] || null);
                     }
                 } else {
                     console.log("Curso não encontrado!");

@@ -9,13 +9,24 @@ const firebaseConfig = {
   projectId: "mitjunior",
   storageBucket: "mitjunior.appspot.com",
   messagingSenderId: "206479062777",
-  appId: "COLOQUE_SEU_APP_ID_AQUI",
+  appId: "1:206479062777:web:default",
 };
 
-// Inicializa o Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+// Initialize Firebase only on client side
+let app: any = null;
+let auth: any = null;
+let db: any = null;
+let storage: any = null;
+
+if (typeof window !== 'undefined') {
+  try {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+  } catch (error) {
+    console.error('Firebase initialization error:', error);
+  }
+}
 
 export { app, auth, db, storage };

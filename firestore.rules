@@ -1,0 +1,627 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // =============================================================================
+    // HELPER FUNCTIONS - Security and Validation
+    // =============================================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+
+    function isModerator() {
+      return isAuthenticated() &&
+        (request.auth.token.admin == true || request.auth.token.moderator == true);
+    }
+
+    function isValidTimestamp() {
+      return request.time == request.time;
+    }
+
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isValidUrl(url) {
+      return url.matches('^https?://[^\\s/$.?#].[^\\s]*$');
+    }
+
+    function isValidFileSize(size, maxSize) {
+      return size <= maxSize;
+    }
+
+    // Rate limiting and anti-abuse
+    function wasRecentlyCreated() {
+      return resource.data.createdAt > (request.time - duration.value(1, 'm'));
+    }
+
+    function canCreateResource() {
+      return !wasRecentlyCreated() &&
+        request.time > (resource.data.lastActivityAt || resource.data.createdAt) - duration.value(1, 's');
+    }
+
+    // Data validation helpers
+    function isValidUserData() {
+      return request.resource.data.keys().hasAll(['uid', 'email']) &&
+        request.resource.data.uid is string &&
+        request.resource.data.uid.size() > 0 &&
+        isValidEmail(request.resource.data.email) &&
+        request.resource.data.email.size() <= 255;
+    }
+
+    function isValidCourseData() {
+      return request.resource.data.keys().hasAll(['title', 'description', 'instructor']) &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() >= 3 &&
+        request.resource.data.title.size() <= 200 &&
+        request.resource.data.description is string &&
+        request.resource.data.description.size() >= 10 &&
+        request.resource.data.description.size() <= 2000 &&
+        request.resource.data.instructor is string &&
+        request.resource.data.instructor.size() >= 2 &&
+        request.resource.data.instructor.size() <= 100;
+    }
+
+    function isValidVideoData() {
+      return request.resource.data.keys().hasAll(['title', 'courseId', 'duration', 'videoUrl']) &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() >= 3 &&
+        request.resource.data.title.size() <= 200 &&
+        request.resource.data.courseId is string &&
+        request.resource.data.courseId.size() > 0 &&
+        request.resource.data.duration is number &&
+        request.resource.data.duration > 0 &&
+        request.resource.data.duration <= 14400 && // Max 4 hours
+        isValidUrl(request.resource.data.videoUrl);
+    }
+
+    // =============================================================================
+    // USER PROFILES COLLECTION
+    // =============================================================================
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserData();
+      allow update: if isOwner(userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'displayName', 'photoURL', 'bio', 'phoneNumber', 'emailVerified',
+          'lastSeen', 'preferences', 'metadata', 'updatedAt'
+        ]);
+      allow delete: if isOwner(userId) || isAdmin();
+
+      // List operations - only for authenticated users with pagination
+      allow list: if isAuthenticated() &&
+        request.query.limit <= 20 &&
+        request.query.orderBy == 'createdAt' ||
+        request.query.orderBy == 'lastSeen';
+    }
+
+    // =============================================================================
+    // COURSES COLLECTION
+    // =============================================================================
+    match /courses/{courseId} {
+      // Read access - public for active courses
+      allow read: if resource.data.isActive == true ||
+        isOwner(resource.data.ownerId) ||
+        isAdmin();
+
+      // Write access - owner and admin only
+      allow create: if isAuthenticated() && isValidCourseData() &&
+        request.resource.data.ownerId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['title', 'description', 'instructor', 'ownerId', 'isActive']) &&
+        (request.resource.data.tags is list || request.resource.data.tags == null);
+
+      allow update: if isOwner(resource.data.ownerId) || isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title', 'description', 'instructor', 'thumbnail', 'tags',
+          'isActive', 'isPublic', 'price', 'metadata', 'updatedAt'
+        ]);
+
+      allow delete: if isOwner(resource.data.ownerId) || isAdmin();
+
+      // List operations - public for active courses
+      allow list: if request.query.limit <= 50 &&
+        (request.query.where == 'isActive,true' || isAuthenticated());
+    }
+
+    // =============================================================================
+    // VIDEOS COLLECTION
+    // =============================================================================
+    match /videos/{videoId} {
+      // Read access - based on course enrollment and public status
+      allow read: if resource.data.isFree == true ||
+        (isAuthenticated() &&
+         resource.data.courseId in get(/databases/$(database)/documents/enrollments/$(request.auth.uid)).data.courseIds) ||
+        isOwner(resource.data.ownerId) ||
+        isAdmin();
+
+      // Write access - course owner and admin only
+      allow create: if isAuthenticated() && isValidVideoData() &&
+        request.resource.data.ownerId == request.auth.uid;
+
+      allow update: if isOwner(resource.data.ownerId) || isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title', 'description', 'thumbnail', 'isFree', 'order',
+          'metadata', 'updatedAt'
+        ]);
+
+      allow delete: if isOwner(resource.data.ownerId) || isAdmin();
+
+      // List operations - with pagination and filtering
+      allow list: if request.query.limit <= 100 &&
+        (request.query.where == 'courseId,' || isAuthenticated());
+    }
+
+    // =============================================================================
+    // ENROLLMENTS COLLECTION
+    // =============================================================================
+    match /enrollments/{userId} {
+      allow read, write: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+        request.resource.data.keys().hasAll(['userId', 'courseIds', 'enrolledAt']) &&
+        request.resource.data.courseIds is list &&
+        request.resource.data.courseIds.size() <= 50; // Max 50 course enrollments
+
+      allow update: if isOwner(userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'courseIds', 'progress', 'lastAccessedAt', 'updatedAt'
+        ]);
+
+      allow delete: if false; // Soft delete only
+    }
+
+    // =============================================================================
+    // USER PROGRESS COLLECTION
+    // =============================================================================
+    match /userProgress/{progressId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+
+      allow create: if isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'videoId', 'courseId', 'watchedSeconds',
+          'totalSeconds', 'isCompleted'
+        ]) &&
+        request.resource.data.watchedSeconds >= 0 &&
+        request.resource.data.watchedSeconds <= request.resource.data.totalSeconds &&
+        request.resource.data.totalSeconds > 0;
+
+      allow update: if isOwner(resource.data.userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'watchedSeconds', 'isCompleted', 'lastPosition',
+          'completedAt', 'updatedAt'
+        ]);
+
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+
+      // List operations - user can only list their own progress
+      allow list: if isOwner(request.auth.uid) &&
+        request.query.limit <= 100;
+    }
+
+    // =============================================================================
+    // POSTS/COMMUNITY COLLECTION
+    // =============================================================================
+    match /posts/{postId} {
+      // Read access - public for approved posts
+      allow read: if resource.data.status == 'approved' ||
+        isOwner(resource.data.authorId) ||
+        isModerator();
+
+      // Create posts - authenticated users
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll([
+          'authorId', 'title', 'content', 'category'
+        ]) &&
+        request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.title.size() >= 5 &&
+        request.resource.data.title.size() <= 200 &&
+        request.resource.data.content.size() >= 10 &&
+        request.resource.data.content.size() <= 5000;
+
+      // Update posts - author and moderators
+      allow update: if isOwner(resource.data.authorId) || isModerator() &&
+        (isOwner(resource.data.authorId) ?
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'title', 'content', 'tags', 'updatedAt'
+          ]) :
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status', 'moderatedBy', 'moderatedAt', 'moderationReason'
+          ])
+        );
+
+      allow delete: if isOwner(resource.data.authorId) || isModerator();
+
+      // List operations - public with pagination
+      allow list: if request.query.limit <= 50 &&
+        (request.query.where == 'status,approved' || isAuthenticated());
+    }
+
+    // =============================================================================
+    // COMMENTS COLLECTION
+    // =============================================================================
+    match /comments/{commentId} {
+      allow read: if resource.data.status == 'approved' ||
+        isOwner(resource.data.authorId) ||
+        isModerator();
+
+      allow create: if isAuthenticated() &&
+        request.resource.data.authorId == request.auth.uid &&
+        request.resource.data.content.size() >= 1 &&
+        request.resource.data.content.size() <= 1000;
+
+      allow update: if isOwner(resource.data.authorId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'content', 'editedAt'
+        ]);
+
+      allow delete: if isOwner(resource.data.authorId) || isModerator();
+    }
+
+    // =============================================================================
+    // GAMIFICATION COLLECTIONS (Existing rules enhanced)
+    // =============================================================================
+
+    // Achievements collection - Read-only for users, write for admins
+    match /achievements/{achievementId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasAll([
+          'title', 'description', 'category', 'type', 'points',
+          'badge', 'requirements', 'isActive'
+        ]) &&
+        request.resource.data.points is number &&
+        request.resource.data.points >= 0 &&
+        request.resource.data.points <= 1000;
+      allow update: if isAdmin() &&
+        request.resource.data.keys().hasAll(['updatedAt']);
+      allow delete: if isAdmin();
+    }
+
+    // User achievements - Users can read their own, system writes
+    match /userAchievements/{userAchievementId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'achievementId', 'progress', 'isCompleted'
+        ]) &&
+        request.resource.data.progress >= 0 &&
+        request.resource.data.progress <= 100;
+      allow update: if isAuthenticated() &&
+        isOwner(resource.data.userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'progress', 'isCompleted', 'notificationSent', 'metadata'
+        ]);
+      allow delete: if false; // Soft delete only
+    }
+
+    // User stats - Users can read their own, system writes
+    match /userStats/{userStatsId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'totalPoints', 'level', 'experiencePoints'
+        ]) &&
+        request.resource.data.totalPoints >= 0 &&
+        request.resource.data.level >= 1 &&
+        request.resource.data.experiencePoints >= 0;
+      allow update: if (isOwner(resource.data.userId) || isAdmin()) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'totalPoints', 'level', 'experiencePoints', 'currentStreak',
+          'longestStreak', 'videosCompleted', 'coursesCompleted',
+          'coursesStarted', 'totalWatchTime', 'averageSessionTime',
+          'achievementsCount', 'certificatesCount', 'leaderboardRank',
+          'weeklyProgress', 'monthlyProgress', 'updatedAt'
+        ]);
+      allow delete: if false; // Never delete user stats
+    }
+
+    // Certificates - Users can read their own, system writes
+    match /certificates/{certificateId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasAll([
+          'userId', 'courseId', 'courseName', 'completionDate',
+          'score', 'totalModules', 'completedModules', 'verificationCode'
+        ]) &&
+        request.resource.data.score >= 0 &&
+        request.resource.data.score <= 100 &&
+        request.resource.data.completedModules >= 0 &&
+        request.resource.data.completedModules <= request.resource.data.totalModules;
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'certificateUrl', 'isActive', 'metadata'
+        ]);
+      allow delete: if false; // Deactivate instead
+    }
+
+    // Point transactions - Users can read their own, system writes
+    match /pointTransactions/{transactionId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasAll([
+          'userId', 'type', 'amount', 'source', 'description', 'balance'
+        ]) &&
+        request.resource.data.balance >= 0;
+      allow update: if false; // Transactions are immutable
+      allow delete: if false; // Never delete transactions
+    }
+
+    // Course progress - Users can read/write their own
+    match /courseProgress/{progressId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'courseId', 'totalVideos', 'completedVideos',
+          'progressPercentage', 'lastAccessedAt'
+        ]) &&
+        request.resource.data.progressPercentage >= 0 &&
+        request.resource.data.progressPercentage <= 100 &&
+        request.resource.data.completedVideos.size() >= 0 &&
+        request.resource.data.completedVideos.size() <= request.resource.data.totalVideos;
+      allow update: if isAuthenticated() &&
+        isOwner(resource.data.userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'completedVideos', 'progressPercentage', 'lastAccessedAt',
+          'completedAt', 'timeSpent', 'certificateEligible', 'score'
+        ]);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Streak data - Users can read their own, system writes
+    match /streakData/{streakId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'currentStreak', 'longestStreak', 'lastActiveDate'
+        ]) &&
+        request.resource.data.currentStreak >= 0 &&
+        request.resource.data.longestStreak >= 0;
+      allow update: if (isOwner(resource.data.userId) || isAdmin()) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'currentStreak', 'longestStreak', 'lastActiveDate', 'streakHistory'
+        ]);
+      allow delete: if false; // Never delete streak data
+    }
+
+    // User activity - Users can read their own, system writes
+    match /userActivity/{activityId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'type', 'timestamp', 'sessionId'
+        ]);
+      allow update: if false; // Activities are immutable
+      allow delete: if isAdmin(); // For GDPR compliance
+    }
+
+    // Gamification notifications - Users can read/update their own, system writes
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasAll([
+          'userId', 'type', 'title', 'message'
+        ]);
+      allow update: if isOwner(resource.data.userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // Leaderboard cache - Read-only for all users, system writes
+    match /leaderboard/{leaderboardId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Gamification config - Admin only
+    match /gamificationConfig/{configId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // User queries optimization - Compound indexes
+    match /userAchievements/{userAchievementId} {
+      // Index: [userId, isCompleted], [userId, unlockedAt]
+      allow list: if isAuthenticated() &&
+        request.query.limit <= 50; // Prevent large reads
+    }
+
+    match /pointTransactions/{transactionId} {
+      // Index: [userId, createdAt], [userId, type]
+      allow list: if isOwner(request.auth.uid) &&
+        request.query.limit <= 100;
+    }
+
+    match /userActivity/{activityId} {
+      // Index: [userId, timestamp], [userId, type]
+      allow list: if isOwner(request.auth.uid) &&
+        request.query.limit <= 100 &&
+        request.query.orderBy == 'timestamp';
+    }
+
+    // =============================================================================
+    // ENGAGEMENT SYSTEM COLLECTIONS
+    // =============================================================================
+
+    // Favorites collection - Users can manage their own favorites
+    match /favorites/{favoriteId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'type', 'itemId', 'title', 'addedAt'
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.type in ['course', 'video'] &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 200;
+
+      allow update: if false; // Favorites are immutable - create/delete only
+
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+
+      // List operations - users can only list their own favorites
+      allow list: if isOwner(request.auth.uid) &&
+        request.query.limit <= 100;
+    }
+
+    // View History collection - Users can manage their own viewing history
+    match /viewHistory/{historyId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'type', 'itemId', 'title', 'viewedAt'
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.type in ['course', 'video'] &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 200;
+
+      allow update: if isOwner(resource.data.userId) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'watchDuration', 'completed', 'lastPosition'
+        ]);
+
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+
+      // List operations - users can only list their own history
+      allow list: if isOwner(request.auth.uid) &&
+        request.query.limit <= 200;
+    }
+
+    // User Interactions collection - Track user interactions with recommendations
+    match /userInteractions/{userId} {
+      allow read, write: if isOwner(userId);
+
+      allow create, update: if isAuthenticated() &&
+        userId == request.auth.uid &&
+        request.resource.data.interactions is list &&
+        request.resource.data.interactions.size() <= 1000 &&
+        request.resource.data.interactions.every(
+          interaction => interaction.keys().hasAll(['itemId', 'interactionType', 'timestamp']) &&
+          interaction.interactionType in ['click', 'dismiss', 'not_interested']
+        );
+    }
+
+    // Recommendations collection - Server-generated, users can read their own
+    match /recommendations/{recommendationId} {
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || !resource.data.keys().hasAll(['userId']));
+
+      allow write: if false; // Only server-side can generate recommendations
+      allow create: if false;
+      allow delete: if false;
+    }
+
+    // User Analytics collection - Track user engagement analytics
+    match /userAnalytics/{userId} {
+      allow read, write: if isOwner(userId);
+
+      allow create, update: if isAuthenticated() &&
+        userId == request.auth.uid &&
+        request.resource.data.events is list &&
+        request.resource.data.events.size() <= 10000 &&
+        request.resource.data.events.every(
+          event => event.keys().hasAll(['eventType', 'timestamp']) &&
+          event.timestamp is timestamp
+        );
+    }
+
+    // Content Analytics collection - Public read, server write
+    match /contentAnalytics/{itemId} {
+      allow read: if true; // Public read access for content stats
+      allow write: if false; // Only server-side can write
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Activities collection - Track user activities for gamification
+    match /activities/{activityId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.keys().hasAll([
+          'userId', 'type', 'title', 'description', 'points', 'timestamp'
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.type in [
+          'video_completed', 'course_completed', 'achievement_unlocked',
+          'level_up', 'certificate_earned', 'streak_milestone'
+        ] &&
+        request.resource.data.points >= 0 &&
+        request.resource.data.points <= 1000 &&
+        request.resource.data.title is string &&
+        request.resource.data.title.size() > 0 &&
+        request.resource.data.title.size() <= 100;
+
+      allow update: if false; // Activities are immutable
+      allow delete: if isAdmin(); // For moderation
+
+      // List operations - users can only list their own activities
+      allow list: if isOwner(request.auth.uid) &&
+        request.query.limit <= 100;
+    }
+
+    // Engagement indexes optimization
+    match /favorites/{favoriteId} {
+      // Compound indexes needed:
+      // - [userId, addedAt]
+      // - [userId, type]
+      // - [userId, category]
+      allow list: if isAuthenticated() &&
+        (request.query.orderBy == 'addedAt' ||
+         request.query.where == 'type,' ||
+         request.query.where == 'category,');
+    }
+
+    match /viewHistory/{historyId} {
+      // Compound indexes needed:
+      // - [userId, viewedAt]
+      // - [userId, type]
+      // - [userId, completed]
+      // - [viewedAt] for trending content
+      allow list: if isAuthenticated() &&
+        (request.query.orderBy == 'viewedAt' ||
+         request.query.where == 'type,' ||
+         request.query.where == 'completed,');
+    }
+
+    match /activities/{activityId} {
+      // Compound indexes needed:
+      // - [userId, timestamp]
+      // - [userId, type]
+      // - [timestamp] for recent activities
+      allow list: if isAuthenticated() &&
+        (request.query.orderBy == 'timestamp' ||
+         request.query.where == 'type,');
+    }
+
+    // Batch operations protection
+    match /{document=**} {
+      allow write: if request.write.size() < 20; // Limit batch writes
+    }
+  }
+}

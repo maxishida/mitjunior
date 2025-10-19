@@ -2,28 +2,556 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    /* Light mode colors */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --primary: 166 100% 39%;   /* Verde #00C896 */
-    --primary-foreground: 210 40% 98%;
-    --ring: 166 100% 39%;      /* Verde for focus states */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* === GLOBAL STYLES === */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-primary, #0f1419);
+  color: var(--text-primary, #f8fafc);
+  font-family: var(--font-family-primary, 'Inter', system-ui, sans-serif);
+  font-size: var(--font-size-base, 1rem);
+  line-height: var(--line-height-normal, 1.5);
+  letter-spacing: var(--letter-spacing-normal, 0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* === FOCUS STYLES === */
+*:focus-visible {
+  outline: 2px solid var(--color-brand, var(--primary-500, #00c896));
+  outline-offset: 2px;
+}
+
+/* === SELECTION STYLES === */
+::selection {
+  background-color: var(--primary-100);
+  color: var(--primary-900);
+}
+
+/* === SCROLLBAR STYLES === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-secondary, #1a1f2e);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-secondary, #475569);
+  border-radius: var(--border-radius-full, 9999px);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-primary, #334155);
+}
+
+/* === FORM ELEMENT RESETS === */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+input, textarea, select {
+  border: none;
+  outline: none;
+  background: none;
+  resize: none;
+}
+
+/* Button reset específico - NÃO remover padding */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* === LINK STYLES === */
+a {
+  color: var(--color-brand, var(--primary-500, #00c896));
+  text-decoration: none;
+  transition: color var(--transition-fast, 150ms ease-in-out);
+}
+
+a:hover {
+  color: var(--color-interactive-hover, var(--primary-600, #00a67c));
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-brand, var(--primary-500, #00c896));
+  outline-offset: 2px;
+  border-radius: var(--border-radius-sm, 0.25rem);
+}
+
+/* === IMAGE STYLES === */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* === LIST STYLES === */
+ul, ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* === HEADING STYLES === */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: var(--line-height-tight, 1.25);
+  color: var(--color-text-primary, var(--text-primary, #f8fafc));
+}
+
+/* === PARAGRAPH STYLES === */
+p {
+  margin: 0;
+  color: var(--color-text-primary, var(--text-primary, #f8fafc));
+}
+
+/* === UTILITY CLASSES === */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* === COMPONENT OVERRIDES === */
+.bg-glass {
+  background: var(--background-glass, rgba(15, 20, 25, 0.8));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.bg-glass-dark {
+  background: var(--background-glass, rgba(15, 20, 25, 0.9));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* === DARK MODE TOGGLE === */
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* === RESPONSIVE HELPERS === */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md, 1rem);
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 var(--spacing-lg, 1.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 var(--spacing-xl, 2rem);
+  }
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* === GAMIFICATION TOKENS === */
+:root {
+  /* Cores de Conquistas (Achievement Colors) */
+  --achievement-bronze: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+  --achievement-silver: linear-gradient(135deg, #C0C0C0 0%, #808080 100%);
+  --achievement-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  --achievement-platinum: linear-gradient(135deg, #E5E4E2 0%, #BCC6CC 100%);
+  --achievement-diamond: linear-gradient(135deg, #B9F2FF 0%, #4A90E2 100%);
+
+  /* Cores Gamificadas Primárias */
+  --gamify-primary: #00C896;
+  --gamify-secondary: #7C3AED;
+  --gamify-accent: #F59E0B;
+  --gamify-rare: #EC4899;
+  --gamify-legendary: #8B5CF6;
+
+  /* Cores de Progresso */
+  --progress-empty: rgba(255, 255, 255, 0.1);
+  --progress-fill: #00C896;
+  --progress-gold: linear-gradient(90deg, #F59E0B 0%, #FFD700 100%);
+  --progress-level: linear-gradient(90deg, #7C3AED 0%, #9333EA 100%);
+
+  /* Cores de Status Gamificado */
+  --xp-color: #00C896;
+  --streak-color: #F59E0B;
+  --ranking-color: #3B82F6;
+  --challenge-color: #EF4444;
+  --mastery-color: #8B5CF6;
+
+  /* Opacidades e Estados */
+  --locked-opacity: 0.3;
+  --new-glow: 0 0 30px rgba(255, 215, 0, 0.6);
+  --achievement-pulse: rgba(0, 200, 150, 0.2);
+  --hover-glow: rgba(0, 200, 150, 0.3);
+
+  /* Sombras de Conquistas */
+  --shadow-achievement: 0 8px 32px rgba(255, 215, 0, 0.3);
+  --shadow-achievement-glow: 0 0 0 4px rgba(255, 215, 0, 0.2);
+  --shadow-rare: 0 8px 32px rgba(236, 72, 153, 0.3);
+  --shadow-legendary: 0 12px 48px rgba(139, 92, 246, 0.4);
+  --shadow-unlock: 0 0 40px rgba(0, 200, 150, 0.6);
+  --shadow-level-up: 0 0 60px rgba(124, 58, 237, 0.5);
+  --shadow-milestone: 0 16px 64px rgba(255, 193, 7, 0.4);
+
+  /* Timing Functions */
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-achievement: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-progress: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-celebration: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Durações */
+  --duration-quick: 0.2s;
+  --duration-normal: 0.4s;
+  --duration-slow: 0.8s;
+  --duration-celebration: 1.2s;
+}
+
+/* === GAMIFICATION COMPONENTS === */
+
+/* Achievement Card */
+.achievement-card {
+  background: var(--background-secondary, #1e293b);
+  border: 2px solid transparent;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  transition: all 0.3s var(--ease-achievement);
+  overflow: hidden;
+}
+
+.achievement-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: var(--achievement-gold);
+  border-radius: 16px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.achievement-card.unlocked {
+  border-color: rgba(255, 215, 0, 0.3);
+  animation: achievementUnlock 0.8s var(--ease-celebration);
+}
+
+.achievement-card.unlocked::before {
+  opacity: 0.1;
+}
+
+.achievement-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-achievement);
+}
+
+.achievement-card.locked {
+  opacity: var(--locked-opacity);
+  filter: grayscale(0.8);
+}
+
+/* Progress Bar Gamified */
+.progress-bar-gamified {
+  height: 8px;
+  background: var(--progress-empty);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-gamified::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: progressShimmer 2s infinite;
+}
+
+.progress-fill-animated {
+  height: 100%;
+  background: var(--progress-fill);
+  border-radius: 999px;
+  position: relative;
+  transition: width 0.6s var(--ease-progress);
+  box-shadow: 0 0 10px rgba(0, 200, 150, 0.5);
+}
+
+/* Level Badge */
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(0, 200, 150, 0.05) 100%);
+  border: 2px solid var(--gamify-secondary);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.level-badge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: levelGlow 3s ease-in-out infinite;
+}
+
+.level-number {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--gamify-secondary);
+  text-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
+}
+
+/* Streak Counter */
+.streak-counter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  position: relative;
+}
+
+.streak-flame {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #F59E0B 0%, #FFD700 100%);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: flameFlicker 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+}
+
+.streak-number {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--streak-color);
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+/* Gamification Notification */
+.gamification-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  background: rgba(15, 20, 25, 0.95);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(0, 200, 150, 0.3);
+  border-radius: 12px;
+  box-shadow: var(--shadow-achievement);
+  z-index: 1000;
+  animation: notificationSlideIn 0.5s var(--ease-achievement);
+}
+
+/* GAMIFICATION ANIMATIONS */
+@keyframes achievementUnlock {
+  0% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(5deg);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.95) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes progressShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes levelGlow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes flameFlicker {
+  0%, 100% {
+    transform: scale(1) skewY(0deg);
+    opacity: 1;
+  }
+  25% {
+    transform: scale(1.05) skewY(2deg);
+    opacity: 0.9;
+  }
+  75% {
+    transform: scale(0.95) skewY(-2deg);
+    opacity: 0.95;
+  }
+}
+
+@keyframes notificationSlideIn {
+  0% {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* === GAMIFICATION ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  .achievement-card,
+  .progress-bar-gamified,
+  .level-badge,
+  .streak-counter,
+  .gamification-notification {
+    animation: none !important;
+    transition: none !important;
   }
 
-  .dark {
-    /* Dark mode colors */
-    --background: 0 0% 3.9%;
-    --foreground: 210 40% 98%;
-    --primary: 166 100% 39%;   /* Verde #00C896 */
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --ring: 166 100% 39%;
+  .achievement-card:hover {
+    transform: none !important;
+  }
+}
+
+.gamified-element:focus-visible {
+  outline: 3px solid var(--gamify-primary);
+  outline-offset: 2px;
+}
+
+/* === GAMIFICATION RESPONSIVE === */
+@media (max-width: 768px) {
+  .achievement-card {
+    padding: 16px;
   }
 
-  body {
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  .level-badge {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .streak-counter {
+    padding: 8px 12px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .gamification-notification {
+    right: 12px;
+    left: 12px;
+    top: 12px;
+  }
+}
+
+/* === PRINT STYLES === */
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a, a:visited {
+    text-decoration: underline;
+  }
+
+  pre, blockquote {
+    border: 1px solid #999;
+    page-break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+  }
+
+  h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* Hide gamification elements in print */
+  .achievement-card::before,
+  .progress-bar-gamified::after,
+  .level-badge::before,
+  .streak-flame,
+  .gamification-notification {
+    display: none !important;
   }
 }

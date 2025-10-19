@@ -49,7 +49,7 @@ export default function EditCoursePage({ params }: PageProps) {
             // Se uma nova capa foi enviada, faz upload dela e exclui a antiga
             if (newCover) {
                 const oldCoverRef = ref(storage, currentCoverURL);
-                await deleteObject(oldCoverRef).catch(err => console.log("Antiga capa não encontrada, continuando..."));
+                await deleteObject(oldCoverRef).catch(() => console.log("Antiga capa não encontrada, continuando..."));
 
                 const newCoverRef = ref(storage, `covers/${Date.now()}_${newCover.name}`);
                 await uploadBytes(newCoverRef, newCover);
@@ -96,7 +96,7 @@ export default function EditCoursePage({ params }: PageProps) {
                             <label className="form-label">Capa Atual</label>
                             <img src={currentCoverURL} alt="Capa atual" width={150} className="d-block rounded mb-2" />
                             <label htmlFor="cover" className="form-label">Substituir Capa (opcional)</label>
-                            <input type="file" className="form-control" id="cover" accept="image/*" onChange={(e) => setNewCover(e.target.files ? e.target.files[0] : null)} />
+                            <input type="file" className="form-control" id="cover" accept="image/*" onChange={(e) => setNewCover(e.target.files?.[0] || null)} />
                         </div>
                         <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
                             {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
