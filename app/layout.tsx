@@ -7,7 +7,6 @@ import { GamificationProvider } from '@/hooks/useGamification';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import LoadingWrapper from '@/components/LoadingSpinner';
 import { HydrationSafeWrapper } from '@/components/HydrationSafeWrapper';
-import { analyticsService, performanceService, errorTrackingService } from '@/lib';
 
 const inter = Inter({
   subsets: ['latin'],

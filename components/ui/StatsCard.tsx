@@ -119,7 +119,7 @@ const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
 
         return () => clearInterval(timer)
       }
-    }, [isVisible, targetValue, animated, formatValue])
+    }, [isVisible, targetValue, animated, formatValue, value])
 
     // Intersection Observer for visibility
     React.useEffect(() => {

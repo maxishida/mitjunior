@@ -1,254 +1,244 @@
-'use client'
+'use client';
 
-import { Button } from '@/components/ui/button'
-import { useEffect, useState, useMemo } from 'react'
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import {
+  ShieldCheck,
+  Trophy,
+  BookOpen,
+  CheckCircle2,
+  Sparkles,
+  ArrowRight,
+  PlayCircle,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+type AuthorityBadge = {
+  icon: typeof ShieldCheck;
+  title: string;
+  subtitle: string;
+};
+
+const AUTHORITY_BADGES: AuthorityBadge[] = [
+  {
+    icon: ShieldCheck,
+    title: 'Especialista em IR',
+    subtitle: 'na Me Poupe!',
+  },
+  {
+    icon: Trophy,
+    title: 'Top 40 influenciadores',
+    subtitle: 'de finanças no Brasil',
+  },
+  {
+    icon: BookOpen,
+    title: 'Autor do e-book',
+    subtitle: '3 passos para começar a investir',
+  },
+];
+
+const SUPPORT_POINTS = [
+  {
+    icon: CheckCircle2,
+    label: 'Acesso imediato',
+  },
+  {
+    icon: Sparkles,
+    label: 'Garantia de 7 dias',
+  },
+];
+
+const HIGHLIGHTS = [
+  {
+    title: '+10.000 alunos',
+    description: 'transformados com a metodologia',
+  },
+  {
+    title: '+85 mil seguidores',
+    description: 'acompanhando dicas de finanças',
+  },
+];
 
 export default function HeroSection() {
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Priority hint para indicar importância do componente
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(() => {
-        setIsLoaded(true)
-      })
-    } else {
-      // Fallback para browsers que não suportam requestIdleCallback
-      setTimeout(() => setIsLoaded(true), 100)
-    }
-  }, [])
+    const timeout = window.setTimeout(() => setIsReady(true), 100);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
-  // Memoizar os selos de autoridade para evitar re-renders desnecessários
-  const authorityBadges = useMemo(() => [
-    {
-      icon: '✅',
-      title: 'Especialista de IR',
-      subtitle: 'na Me Poupe!',
-      ariaLabel: 'Verificado'
-    },
-    {
-      icon: '🏆',
-      title: 'Top 40 influenciadores',
-      subtitle: 'de finanças no Brasil',
-      ariaLabel: 'Troféu'
-    },
-    {
-      icon: '📚',
-      title: 'Autor do e-book',
-      subtitle: '3 passos para começar a investir',
-      ariaLabel: 'Livros'
-    }
-  ], [])
-
-  const handlePrimaryCTA = () => {
-    console.log('CTA: Quero Virar o Jogo Agora')
-    // Redireciona para a seção de programas ou pode ser configurado para checkout/lead
-    const productsSection = document.getElementById('programas')
-    if (productsSection) {
-      productsSection.scrollIntoView({ behavior: 'smooth' })
-    }
-    // TODO: Implementar lógica de conversão/redirecionamento para checkout
-  }
-
-  const handleSecondaryCTA = () => {
-    console.log('CTA: Ver Programas & Consultoria')
-    const productsSection = document.getElementById('programas')
-    if (productsSection) {
-      productsSection.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
+  const transitionBase =
+    'transform transition-all duration-700 ease-out will-change-transform';
 
   return (
     <section
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0F1419]"
-      aria-label="Seção principal da landing page de Mitsuo Ishida"
       id="hero"
+      aria-label="Seção principal da landing page de Mitsuo Ishida"
+      className="relative overflow-hidden bg-gradient-to-b from-background via-background/85 to-background-secondary/80"
     >
-      {/* Background Digital Serenity - Fallback gradiente animado */}
-      <div className="absolute inset-0">
-        {/* Gradiente base */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0F1419] via-[#1A1F26] to-[#0F1419]" />
-
-        {/* Efeitos de partículas verdes flutuando */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#00C896]/10 rounded-full blur-[128px] animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#00E5A8]/10 rounded-full blur-[128px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-[#00C896]/5 rounded-full blur-[200px] animate-pulse" style={{ animationDelay: '2s' }} />
-
-        {/* Overlay gradiente para profundidade */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F1419] via-transparent to-[#0F1419]/50" />
+      {/* Background decoration */}
+      <div aria-hidden="true">
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-[#111823] to-[#0c1017]" />
+        <div className="pointer-events-none absolute -left-1/4 top-1/3 h-[32rem] w-[32rem] rounded-full bg-primary/20 blur-[140px]" />
+        <div className="pointer-events-none absolute -right-1/3 top-0 h-[36rem] w-[36rem] rounded-full bg-primary/10 blur-[160px]" />
+        <div className="pointer-events-none absolute left-1/2 top-2/3 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-primary/5 blur-[200px]" />
       </div>
 
-      {/* Conteúdo Principal */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-32">
-        <div className="text-center max-w-5xl mx-auto">
-
-          {/* Badge de prova social */}
-          <div
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 mb-8 hover:bg-white/10 transition-all duration-300 ${
-              isLoaded ? 'animate-fadeIn' : 'opacity-0'
-            }`}
-          >
-            <span className="text-[#00C896] text-lg">✓</span>
-            <span className="text-sm text-gray-300 font-medium">+10.000 alunos transformados</span>
-          </div>
-
-          {/* Headline Principal */}
-          <h1
-            className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold text-white leading-[1.1] tracking-tight mb-6 ${
-              isLoaded ? 'animate-fadeIn' : 'opacity-0'
-            }`}
-            style={{ animationDelay: '0.1s' }}
-          >
-            Domine Seu Dinheiro em{' '}
-            <span className="bg-gradient-to-r from-[#00C896] to-[#00E5A8] text-transparent bg-clip-text">
-              30 Dias
-            </span>
-            {' '}— com o{' '}
-            <span className="bg-gradient-to-r from-[#00C896] to-[#00E5A8] text-transparent bg-clip-text">
-              Personal Financeiro
-            </span>
-            {' '}que Domou o Leão{' '}
-            <span className="inline-block" role="img" aria-label="Leão">🦁</span>
-          </h1>
-
-          {/* Subheadline */}
-          <p
-            className={`text-lg sm:text-xl md:text-2xl text-gray-300 leading-relaxed mb-12 max-w-4xl mx-auto ${
-              isLoaded ? 'animate-fadeIn' : 'opacity-0'
-            }`}
-            style={{ animationDelay: '0.2s' }}
-          >
-            A metodologia prática do{' '}
-            <strong className="text-[#00C896]">Mitsuo Ishida</strong> — especialista em Imposto de Renda na Me Poupe!, contador e MBA em investimentos — já impactou{' '}
-            <strong className="text-white">+10.000 alunos</strong> e uma audiência de{' '}
-            <strong className="text-white">+85 mil seguidores</strong>.
-            Aprenda a anotar, entender e planejar seu dinheiro, eliminar dívidas e investir com clareza.
-          </p>
-
-          {/* CTAs */}
-          <div
-            className={`flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 px-4 sm:px-0 ${
-              isLoaded ? 'animate-fadeIn' : 'opacity-0'
-            }`}
-            style={{ animationDelay: '0.3s' }}
-          >
-            <button
-              onClick={handlePrimaryCTA}
-              className="group sm:px-8 px-6 py-4 text-lg font-bold bg-[#00C896] text-white rounded-lg shadow-2xl shadow-[#00C896]/50 hover:shadow-[#00C896]/70 hover:bg-[#00C896]/90 min-h-[56px] focus:outline-none focus:ring-4 focus:ring-[#00C896]/50 transition-all duration-200 max-w-full"
-              aria-label="Começar transformação financeira agora"
-              style={{ paddingLeft: '2rem', paddingRight: '2rem' }}
+      <div className="relative mx-auto flex max-w-7xl flex-col gap-16 px-6 pb-24 pt-28 md:px-10 lg:px-12 xl:pt-36">
+        <div className="grid items-center gap-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-20">
+          {/* Copy */}
+          <div className="flex flex-col">
+            <div
+              className={`${transitionBase} mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-200 backdrop-blur-sm ${
+                isReady ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+              }`}
+              style={{ transitionDelay: '80ms' }}
             >
-              Quero Virar o Jogo Agora
-              <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
-            </button>
+              <Sparkles size={16} className="text-primary" aria-hidden="true" />
+              +10.000 alunos transformados
+            </div>
 
-            <button
-              onClick={handleSecondaryCTA}
-              className="sm:px-8 px-6 py-4 text-lg font-semibold bg-transparent border-2 border-[#00C896] text-[#00C896] rounded-lg hover:bg-[#00C896] hover:text-white min-h-[56px] focus:outline-none focus:ring-4 focus:ring-white/20 transition-all duration-200 max-w-full"
-              aria-label="Ver programas e consultoria disponíveis"
-              style={{ paddingLeft: '2rem', paddingRight: '2rem' }}
+            <h1
+              className={`${transitionBase} text-4xl font-black tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[3.65rem] ${
+                isReady ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+              }`}
+              style={{ transitionDelay: '120ms' }}
             >
-              Ver Programas & Consultoria
-              <span className="inline-block ml-2">↓</span>
-            </button>
-          </div>
+              Domine seu dinheiro em{' '}
+              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                30 dias
+              </span>{' '}
+              com o personal financeiro que domou o leão.
+            </h1>
 
-          {/* Microcopy dos CTAs */}
-          <div
-            className={`flex flex-col sm:flex-row gap-4 justify-center mb-12 text-sm ${
-              isLoaded ? 'animate-fadeIn' : 'opacity-0'
-            }`}
-            style={{ animationDelay: '0.35s' }}
-          >
-            <div className="text-gray-400">
-              <span className="text-[#00C896]">⚡</span> acesso imediato
-            </div>
-            <div className="text-gray-400">
-              <span className="text-[#00C896]">🔒</span> garantia de 7 dias
-            </div>
-          </div>
+            <p
+              className={`${transitionBase} mt-6 max-w-2xl text-lg leading-relaxed text-gray-300 sm:text-xl ${
+                isReady ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+              }`}
+              style={{ transitionDelay: '160ms' }}
+            >
+              A metodologia prática de <span className="text-primary">Mitsuo Ishida</span>,
+              especialista em Imposto de Renda e MBA em investimentos, ensina a anotar,
+              entender e planejar seu dinheiro para eliminar dívidas e investir com clareza.
+            </p>
 
-          {/* Selos de Autoridade */}
-          <div
-            className={`grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto ${
-              isLoaded ? 'animate-fadeIn' : 'opacity-0'
-            }`}
-            style={{ animationDelay: '0.5s' }}
-          >
-            {authorityBadges.map((badge, index) => (
-              <div
-                key={index}
-                className="group p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-[#00C896]/30 hover:-translate-y-1 transition-all duration-300"
+            <div
+              className={`${transitionBase} mt-10 flex flex-col gap-4 sm:flex-row sm:items-center ${
+                isReady ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+              }`}
+              style={{ transitionDelay: '200ms' }}
+            >
+              <Button
+                onClick={() => {
+                  const target = document.getElementById('pricing');
+                  if (target) target.scrollIntoView({ behavior: 'smooth' });
+                }}
+                size="lg"
+                variant="primary"
+                className="group flex items-center gap-2 rounded-xl px-8 py-4 text-base font-semibold shadow-lg shadow-primary/30 hover:shadow-primary/45"
+                aria-label="Começar agora sua transformação financeira"
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="text-3xl group-hover:scale-110 transition-transform"
-                    role="img"
-                    aria-label={badge.ariaLabel}
-                  >
-                    {badge.icon}
+                Começar agora
+                <ArrowRight
+                  className="transition-transform duration-300 group-hover:translate-x-1"
+                  aria-hidden="true"
+                  size={18}
+                />
+              </Button>
+              <button
+                onClick={() => {
+                  const target = document.getElementById('programas');
+                  if (target) target.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="group inline-flex items-center gap-2 rounded-xl border border-white/10 px-7 py-4 text-base font-semibold text-gray-200 transition-colors duration-300 hover:border-primary hover:bg-primary/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                aria-label="Ver programas e consultoria disponíveis"
+              >
+                Ver programas e consultoria
+                <PlayCircle
+                  size={18}
+                  className="text-primary transition-transform duration-300 group-hover:scale-110"
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+
+            <div
+              className={`${transitionBase} mt-10 flex flex-col gap-4 text-sm text-gray-400 sm:flex-row sm:items-center sm:gap-6 ${
+                isReady ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+              }`}
+              style={{ transitionDelay: '240ms' }}
+            >
+              {SUPPORT_POINTS.map((point) => {
+                const Icon = point.icon;
+                return (
+                  <div key={point.label} className="flex items-center gap-2">
+                    <Icon size={18} className="text-primary" aria-hidden="true" />
+                    <span>{point.label}</span>
                   </div>
-                  <p className="text-sm text-gray-300 text-left leading-snug">
-                    <strong className="text-[#00C896]">{badge.title}</strong>
-                    {badge.subtitle && <><br />{badge.subtitle}</>}
-                  </p>
+                );
+              })}
+            </div>
+
+            <div
+              className={`${transitionBase} mt-12 grid gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-3 ${
+                isReady ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+              }`}
+              style={{ transitionDelay: '300ms' }}
+            >
+              {AUTHORITY_BADGES.map((badge) => {
+                const Icon = badge.icon;
+                return (
+                  <div
+                    key={badge.title}
+                    className="group flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:bg-white/10"
+                  >
+                    <div className="rounded-full bg-primary/15 p-2 text-primary transition-transform duration-300 group-hover:scale-110">
+                      <Icon size={22} aria-hidden="true" />
+                    </div>
+                    <div className="text-sm leading-snug text-gray-200">
+                      <strong className="block font-semibold text-white">{badge.title}</strong>
+                      <span className="text-gray-400">{badge.subtitle}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Visual column */}
+          <div
+            className={`${transitionBase} relative mx-auto w-full max-w-xl ${
+              isReady ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
+            }`}
+            style={{ transitionDelay: '200ms' }}
+          >
+            <div className="absolute inset-0 -z-10 rounded-[2.5rem] bg-gradient-to-br from-primary/25 via-primary/5 to-transparent blur-3xl" />
+            <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/5 shadow-xl shadow-black/30 backdrop-blur">
+              <Image
+                src="/hero-section.png"
+                alt="Visão geral da plataforma Mitsuo Ishida"
+                width={1000}
+                height={1200}
+                className="h-full w-full object-cover"
+                priority
+              />
+              <div className="absolute inset-x-8 bottom-8 rounded-2xl border border-white/10 bg-neutral-900/90 p-6 text-left shadow-lg shadow-black/40 backdrop-blur">
+                <p className="text-sm uppercase tracking-[0.3em] text-primary">
+                  Transformação financeira
+                </p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  {HIGHLIGHTS.map((highlight) => (
+                    <div key={highlight.title} className="rounded-xl bg-white/5 p-4">
+                      <p className="text-lg font-semibold text-white">{highlight.title}</p>
+                      <p className="text-sm text-gray-400">{highlight.description}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Indicador de scroll */}
-      <div
-        className={`absolute bottom-8 left-1/2 transform -translate-x-1/2 text-gray-400 animate-bounce ${
-          isLoaded ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{ animationDelay: '1s' }}
-      >
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-sm">Scroll para explorar</span>
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 14l-7 7m0 0l-7-7m7 7V3"
-            />
-          </svg>
-        </div>
-      </div>
-
-      {/* Efeitos adicionais de background (ocultos para acessibilidade) */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-30" aria-hidden="true">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#00C896]/20 rounded-full blur-3xl will-change-transform" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#00C896]/10 rounded-full blur-3xl will-change-transform" />
-        <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-[#00E5A8]/15 rounded-full blur-3xl will-change-transform" />
-      </div>
-
-      {/* CSS para animações customizadas */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.8s ease-out forwards;
-        }
-      `}</style>
     </section>
-  )
+  );
 }

@@ -434,7 +434,7 @@ export default function CommunityPage() {
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center space-x-2 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg transition-colors"
                 >
-                  <Image className="w-4 h-4" />
+                  <Image className="w-4 h-4" alt="Upload de imagem" />
                   <span>Adicionar Imagem</span>
                 </button>
                 <input

@@ -24,8 +24,9 @@ export default function ContinueWatching({ videos }: ContinueWatchingProps) {
     setProgress(initialProgress);
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      const currentInterval = intervalRef.current;
+      if (currentInterval) {
+        clearInterval(currentInterval);
       }
     };
   }, [videos]);

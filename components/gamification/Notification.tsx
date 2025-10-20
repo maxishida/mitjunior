@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Trophy, Star, Zap, X, Award, Crown, Flame } from 'lucide-react';
 
 interface NotificationProps {
@@ -29,24 +29,12 @@ export const GamificationNotification: React.FC<NotificationProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
-  useEffect(() => {
-    setIsVisible(true);
-
-    if (autoClose && duration > 0) {
-      const timer = setTimeout(() => {
-        handleClose();
-      }, duration);
-
-      return () => clearTimeout(timer);
-    }
-  }, [autoClose, duration]);
-
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsLeaving(true);
     setTimeout(() => {
       onClose?.(id);
     }, 300);
-  };
+  }, [id, onClose]);
 
   const getNotificationConfig = () => {
     switch (type) {

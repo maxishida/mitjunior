@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import { Check, Star, ArrowRight, Calendar, CreditCard, BookOpen, User } from "lucide-react"
 import { Button } from "@/components/ui"
 import {
@@ -17,87 +17,89 @@ interface Product {
   id: string
   title: string
   subtitle: string
-  price?: string
+  price: string
   features: string[]
   icon: React.ReactNode
+  color: string
   cta: string
   popular?: boolean
-  color: string
 }
 
-// Produtos configurados conforme copy.md
+// Array de produtos
 const products: Product[] = [
   {
     id: "academia-financas",
     title: "Academia de Finanças",
-    subtitle: "30 Dias pra Virar o Jogo",
+    subtitle: "Transformação completa em 30 dias",
+    price: "R$ 297",
     features: [
-      "Anote e entenda seus gastos",
-      "Elimine dívidas pequenas que drenam sua renda",
-      "Planeje os próximos meses com clareza",
-      "Comece sua renda extra com estratégia"
+      "Acesso vitalício ao curso",
+      "Exercícios práticos diários",
+      "Comunidade exclusiva",
+      "Certificado de conclusão",
+      "Suporte direto com Mitsuo"
     ],
-    icon: <Calendar className="w-6 h-6" />,
-    cta: "Quero entrar no desafio",
-    color: "from-brand-500 to-brand-600"
+    icon: <BookOpen className="w-6 h-6" />,
+    color: "from-blue-500 to-blue-600",
+    cta: "Começar Agora"
   },
   {
     id: "projeto-verao",
-    title: "Projeto Verão",
-    subtitle: "Seca Dívidas",
+    title: "Verão Seca Dívidas",
+    subtitle: "Elimine dívidas essenciais",
+    price: "R$ 197",
     features: [
-      "Passo a passo simples e aplicável",
-      "Começa com o essencial: anotar para poder mudar",
-      "Pare de \"ganhar tempo\" e ataque o que pesa"
+      "Treinamento intensivo",
+      "Planilha de controle financeiro",
+      "Técnicas de negociação",
+      "Acompanhamento personalizado",
+      "Garantia de resultado"
     ],
-    icon: <CreditCard className="w-6 h-6" />,
-    cta: "Quero secar minhas dívidas",
-    color: "from-brand-600 to-brand-700"
+    icon: <Calendar className="w-6 h-6" />,
+    color: "from-green-500 to-green-600",
+    cta: "Participar Agora"
   },
   {
     id: "consultoria",
-    title: "Consultoria de Finanças & Impostos",
-    subtitle: "Atendimento Online",
-    price: "R$ 290/h",
+    title: "Consultoria 1:1",
+    subtitle: "Atendimento personalizado",
+    price: "R$ 290",
     features: [
-      "Atendimento 1:1 personalizado",
-      "Orientação para declaração do Imposto de Renda",
-      "Foco em clareza e decisão",
-      "Resolução de dúvidas específicas"
+      "Sessão de 1 hora",
+      "Análise completa financeira",
+      "Plano de ação personalizado",
+      "Suporte por e-mail",
+      "Material de apoio"
     ],
     icon: <User className="w-6 h-6" />,
-    cta: "Agendar minha consultoria",
-    popular: true,
-    color: "from-brand-500 to-brand-600"
+    color: "from-purple-500 to-purple-600",
+    cta: "Agendar Consultoria",
+    popular: true
   },
   {
     id: "ebook",
-    title: "E-book",
-    subtitle: "3 passos para começar a investir",
+    title: "E-book Guia Prático",
+    subtitle: "3 Passos para Começar a Investir",
+    price: "R$ 47",
     features: [
-      "Fundamentos práticos",
-      "Estrutura para dar o primeiro passo com confiança",
-      "Linguagem simples e direta",
-      "Guia completo para iniciantes"
+      "Guia completo em PDF",
+      "Exemplos práticos",
+      "Planilhas inclusas",
+      "Acesso imediato",
+      "Atualizações gratuitas"
     ],
-    icon: <BookOpen className="w-6 h-6" />,
-    cta: "Quero meu e-book",
-    color: "from-brand-600 to-brand-700"
+    icon: <CreditCard className="w-6 h-6" />,
+    color: "from-orange-500 to-orange-600",
+    cta: "Comprar Agora"
   }
 ]
 
-// Componente para feature list com checkmarks
+// Componente FeatureList
 const FeatureList: React.FC<{ features: string[] }> = ({ features }) => (
-  <ul className="space-y-3" role="list">
+  <ul className="space-y-3">
     {features.map((feature, index) => (
-      <li
-        key={index}
-        className="flex items-start gap-3 text-sm text-gray-300 leading-relaxed"
-        role="listitem"
-      >
-        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-500/20 flex items-center justify-center mt-0.5">
-          <Check className="w-3 h-3 text-brand-400" aria-hidden="true" />
-        </div>
+      <li key={index} className="flex items-start gap-3">
+        <Check className="w-5 h-5 text-brand-400 flex-shrink-0 mt-0.5" />
         <span>{feature}</span>
       </li>
     ))}
@@ -106,36 +108,25 @@ const FeatureList: React.FC<{ features: string[] }> = ({ features }) => (
 
 // Componente principal PricingSection
 export const PricingSection: React.FC = () => {
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null)
-
   // Handlers para CTAs
   const handleCTAClick = (productId: string) => {
-    setSelectedProduct(productId)
-
     // Lógica de redirecionamento ou ação baseada no produto
     switch (productId) {
       case "academia-financas":
-        // Redirecionar para página da academia ou abrir modal
-        console.log("Redirecionar para: Academia de Finanças")
         window.open("#contato", "_self")
         break
       case "projeto-verao":
-        // Redirecionar para página do projeto
-        console.log("Redirecionar para: Projeto Verão")
         window.open("#contato", "_self")
         break
       case "consultoria":
-        // Redirecionar para agendamento
-        console.log("Redirecionar para: Agendamento de Consultoria")
         window.open("#contato", "_self")
         break
       case "ebook":
-        // Redirecionar para download/pagina do e-book
-        console.log("Redirecionar para: Download E-book")
         window.open("#contato", "_self")
         break
       default:
-        console.log("Produto não encontrado:", productId)
+        window.open("#contato", "_self")
+        break
     }
   }
 
@@ -213,7 +204,7 @@ export const PricingSection: React.FC = () => {
                   {product.price && (
                     <div className="mt-4">
                       <span className="text-3xl font-bold text-white">{product.price}</span>
-                      <span className="text-gray-400 ml-2">/hora</span>
+                      <span className="text-gray-400 ml-2">/mês</span>
                     </div>
                   )}
                 </CardHeader>

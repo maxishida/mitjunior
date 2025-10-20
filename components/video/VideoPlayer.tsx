@@ -98,27 +98,27 @@ export default function VideoPlayer({
   }, [isPlaying, showSettings, showVolume]);
 
   // Event handlers
-  const handlePlay = () => {
+  const handlePlay = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.play();
       setIsPlaying(true);
     }
-  };
+  }, []);
 
-  const handlePause = () => {
+  const handlePause = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.pause();
       setIsPlaying(false);
     }
-  };
+  }, []);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = useCallback(() => {
     if (isPlaying) {
       handlePause();
     } else {
       handlePlay();
     }
-  };
+  }, [isPlaying, handlePlay, handlePause]);
 
   const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
@@ -130,12 +130,12 @@ export default function VideoPlayer({
     }
   };
 
-  const handleMuteToggle = () => {
+  const handleMuteToggle = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
-  };
+  }, [isMuted]);
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     if (progressRef.current && videoRef.current) {
@@ -148,7 +148,7 @@ export default function VideoPlayer({
     }
   };
 
-  const handleFullscreenToggle = () => {
+  const handleFullscreenToggle = useCallback(() => {
     if (containerRef.current) {
       if (!isFullscreen) {
         containerRef.current.requestFullscreen();
@@ -158,7 +158,7 @@ export default function VideoPlayer({
         setIsFullscreen(false);
       }
     }
-  };
+  }, [isFullscreen]);
 
   const handlePictureInPicture = async () => {
     if (videoRef.current) {
@@ -207,7 +207,7 @@ export default function VideoPlayer({
         handleMuteToggle();
         break;
     }
-  }, [isPlaying, volume]);
+  }, [volume, handlePlayPause, handleFullscreenToggle, handleMuteToggle]);
 
   // Progress bar dragging
   const handleMouseDown = () => {

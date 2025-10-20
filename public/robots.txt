@@ -1,12 +1,40 @@
-# https://www.robotstxt.org/robotstxt.html
+# *
 User-agent: *
 Allow: /
-
-# Disallow sensitive areas
-Disallow: /api/
 Disallow: /admin/
+Disallow: /api/
 Disallow: /_next/
-Disallow: /firebase-debug.log
+Disallow: /static/
+Disallow: /.well-known/
+Disallow: /app/aula/
+Disallow: /app/perfil/
+Disallow: /app/configuracoes/
+Disallow: /meus-cursos/
+Disallow: /progress/
+Disallow: /continue-watching/
+
+# GPTBot
+User-agent: GPTBot
+Disallow: /
+
+# ChatGPT-User
+User-agent: ChatGPT-User
+Disallow: /
+
+# CCBot
+User-agent: CCBot
+Disallow: /
+
+# anthropic-ai
+User-agent: anthropic-ai
+Disallow: /
+
+# Claude-Web
+User-agent: Claude-Web
+Disallow: /
+
+# Host
+Host: https://mitsuoishida.com
 
 # Sitemaps
-Sitemap: https://comunidadeflix.com/sitemap.xml
+Sitemap: https://mitsuoishida.com/sitemap.xml
