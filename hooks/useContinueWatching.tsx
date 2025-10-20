@@ -20,7 +20,12 @@ export function useContinueWatching(userId: string | undefined, limitCount: numb
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setItems([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
     setLoading(true);
 

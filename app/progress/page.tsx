@@ -31,12 +31,14 @@ export default function ProgressPage() {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const { items: recentVideos } = useRecentVideos(user?.uid, 10);
   const router = useRouter();
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const canAccess = Boolean(user) || isDevelopment;
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !isDevelopment) {
       router.push('/login');
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, isDevelopment]);
 
   useEffect(() => {
     const loadCourseProgresses = async () => {
@@ -56,6 +58,12 @@ export default function ProgressPage() {
       }
     };
 
+    if (!user) {
+      setCourseProgresses([]);
+      setLoadingCourses(false);
+      return;
+    }
+
     if (user) {
       loadCourseProgresses();
     }
@@ -69,7 +77,7 @@ export default function ProgressPage() {
     );
   }
 
-  if (!user) {
+  if (!canAccess) {
     return null; // Will redirect
   }
 

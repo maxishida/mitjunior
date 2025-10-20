@@ -20,12 +20,14 @@ export default function BemVindoPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [countdown, setCountdown] = useState(5);
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const canRender = Boolean(user) || isDevelopment;
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isDevelopment) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isDevelopment]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -45,7 +47,7 @@ export default function BemVindoPage() {
     );
   }
 
-  if (!user) {
+  if (!canRender) {
     return null;
   }
 

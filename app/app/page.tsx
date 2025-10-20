@@ -1,42 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import InternalNavigation from '@/components/layout/InternalNavigation';
 import ContentCarousel from '@/components/content/ContentCarousel';
-import FeaturedHero from '@/components/content/FeaturedHero';
 import ContinueWatching from '@/components/content/ContinueWatching';
-import { Play, Info, Plus, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
-import type { Course, Video, Progress } from '@/types/course';
+import { DashboardHero } from '@/components/app/DashboardHero';
+import { DashboardStatsRow, type DashboardStat } from '@/components/app/DashboardStatsRow';
+import type { Course, Video } from '@/types/course';
 
-// Mock data - substituir com dados reais da API
 const mockFeaturedCourse: Course = {
   id: '1',
   title: 'Investimentos do Zero ao Milhão',
-  description: 'Aprenda a construir uma carteira de investimentos sólida e rentável do zero',
-  thumbnail: '/courses/investments-hero.jpg',
-  thumbnailBlur: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...',
-  duration: 1200, // 20 horas em minutos
+  description:
+    'Aprenda a construir uma carteira de investimentos sólida e rentável do zero com as estratégias que transformaram milhares de alunos.',
+  thumbnail: '/landing-page-full.png',
+  thumbnailBlur: '',
+  duration: 1200,
   level: 'iniciante',
   instructor: {
     id: '1',
     name: 'Mitsuo Ishida',
     avatar: '/instructors/mitsuo.jpg',
-    bio: 'Especialista em finanças pessoais com 15 anos de experiência'
+    bio: 'Especialista em finanças pessoais com 15 anos de experiência',
   },
-  category: 'investimentos',
-  tags: ['investimentos', 'Renda Variável', 'FIIs'],
+  category: 'Investimentos',
+  tags: ['investimentos', 'renda-variavel', 'planejamento'],
   rating: 4.9,
   studentsCount: 15420,
   price: 297,
   promotionalPrice: 197,
   isFeatured: true,
   isNew: false,
-  progress: 0,
+  progress: 42,
   totalLessons: 45,
-  completedLessons: 0,
-  certificateAvailable: false,
+  completedLessons: 12,
+  certificateAvailable: true,
   createdAt: '2024-01-15',
-  updatedAt: '2024-01-15'
+  updatedAt: '2024-01-15',
 };
 
 const mockContinueWatching: (Video & { course: Course })[] = [
@@ -44,211 +44,219 @@ const mockContinueWatching: (Video & { course: Course })[] = [
     id: 'v1',
     title: 'Introdução ao Mercado de Ações',
     description: 'Entenda os fundamentos do mercado de ações brasileiro',
-    duration: 1800, // 30 minutos
+    duration: 1800,
     thumbnail: '/videos/intro-stock-market.jpg',
-    thumbnailBlur: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...',
+    thumbnailBlur: '',
     courseId: '1',
     lessonNumber: 1,
     order: 1,
     course: mockFeaturedCourse,
-    watchTime: 900, // 15 minutos assistidos
+    watchTime: 900,
     completed: false,
     createdAt: '2024-01-15',
-    updatedAt: '2024-01-15'
+    updatedAt: '2024-01-15',
   },
   {
     id: 'v2',
     title: 'Análise Fundamentalista na Prática',
     description: 'Aprenda a analisar empresas como um profissional',
-    duration: 2400, // 40 minutos
+    duration: 2400,
     thumbnail: '/videos/fundamental-analysis.jpg',
-    thumbnailBlur: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...',
+    thumbnailBlur: '',
     courseId: '2',
     lessonNumber: 5,
     order: 5,
     course: {
       ...mockFeaturedCourse,
       id: '2',
-      title: 'Análise de Investimentos Avançada'
+      title: 'Análise de Investimentos Avançada',
     },
-    watchTime: 1200, // 20 minutos assistidos
+    watchTime: 1200,
     completed: false,
     createdAt: '2024-01-14',
-    updatedAt: '2024-01-14'
-  }
+    updatedAt: '2024-01-14',
+  },
 ];
 
 const mockCategories = [
   {
     id: 'investimentos',
-    title: 'Investimentos',
+    title: 'Trilhas de Investimentos',
     courses: [
       { ...mockFeaturedCourse, id: '1' },
-      { ...mockFeaturedCourse, id: '2', title: 'Fundos Imobiliários', category: 'fundos' },
-      { ...mockFeaturedCourse, id: '3', title: 'Tesouro Direto', category: 'renda-fixa' },
-      { ...mockFeaturedCourse, id: '4', title: 'Criptomoedas', category: 'crypto' },
-      { ...mockFeaturedCourse, id: '5', title: 'Ações Internacionais', category: 'acoes' },
-    ]
+      { ...mockFeaturedCourse, id: '2', title: 'Fundos Imobiliários', category: 'Fundos' },
+      { ...mockFeaturedCourse, id: '3', title: 'Tesouro Direto', category: 'Renda Fixa' },
+      { ...mockFeaturedCourse, id: '4', title: 'Criptomoedas', category: 'Cripto' },
+      { ...mockFeaturedCourse, id: '5', title: 'Ações Internacionais', category: 'Ações' },
+    ],
   },
   {
     id: 'impostos',
-    title: 'Impostos e Tributação',
+    title: 'Especial IR & Tributos',
     courses: [
-      { ...mockFeaturedCourse, id: '6', title: 'Declaração de IR', category: 'impostos' },
-      { ...mockFeaturedCourse, id: '7', title: 'Planejamento Tributário', category: 'impostos' },
-      { ...mockFeaturedCourse, id: '8', title: 'Empresas e CNPJ', category: 'impostos' },
-      { ...mockFeaturedCourse, id: '9', title: 'Investimentos e IR', category: 'impostos' },
-    ]
+      { ...mockFeaturedCourse, id: '6', title: 'Declaração de IR 2025', category: 'Impostos' },
+      { ...mockFeaturedCourse, id: '7', title: 'Planejamento Tributário', category: 'Impostos' },
+      { ...mockFeaturedCourse, id: '8', title: 'Empresas & CNPJ', category: 'Empreendedorismo' },
+      { ...mockFeaturedCourse, id: '9', title: 'Investimentos e IR', category: 'Investimentos' },
+    ],
   },
   {
     id: 'financas-pessoais',
-    title: 'Finanças Pessoais',
+    title: 'Playlists Financeiras',
     courses: [
-      { ...mockFeaturedCourse, id: '10', title: 'Orçamento Mensal', category: 'financas' },
-      { ...mockFeaturedCourse, id: '11', title: 'Emergência Financeira', category: 'financas' },
-      { ...mockFeaturedCourse, id: '12', title: 'Dívidas e Crédito', category: 'financas' },
-      { ...mockFeaturedCourse, id: '13', title: 'Metas Financeiras', category: 'financas' },
-    ]
-  }
+      { ...mockFeaturedCourse, id: '10', title: 'Orçamento Mensal', category: 'Finanças' },
+      { ...mockFeaturedCourse, id: '11', title: 'Reserva de Emergência', category: 'Finanças' },
+      { ...mockFeaturedCourse, id: '12', title: 'Dívidas & Crédito', category: 'Finanças' },
+      { ...mockFeaturedCourse, id: '13', title: 'Metas Financeiras', category: 'Finanças' },
+    ],
+  },
 ];
 
 export default function DashboardPage() {
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const heroHighlights = [
+    {
+      label: 'Alunos ativos',
+      value: `+${Math.floor(mockFeaturedCourse.studentsCount / 1000)}k`,
+      icon: 'users' as const,
+      description: 'Com desafios semanais',
+    },
+    {
+      label: 'Avaliação média',
+      value: `${mockFeaturedCourse.rating?.toFixed(1) ?? '4.9'}`,
+      icon: 'rating' as const,
+      description: 'Baseada em feedbacks reais',
+    },
+    {
+      label: 'Carga horária',
+      value: `${Math.floor(mockFeaturedCourse.duration / 60)}h`,
+      icon: 'duration' as const,
+      description: `${mockFeaturedCourse.totalLessons} aulas e materiais`,
+    },
+  ];
+
+  const dashboardStats: DashboardStat[] = [
+    {
+      label: 'Progresso geral',
+      value: '62%',
+      description: 'Cursos em andamento',
+      icon: 'trend',
+    },
+    {
+      label: 'Tempo assistido',
+      value: '24h',
+      description: 'Últimas 4 semanas',
+      icon: 'clock',
+    },
+    {
+      label: 'Sequência ativa',
+      value: '12 dias',
+      description: 'Rumo ao novo recorde',
+      icon: 'streak',
+    },
+    {
+      label: 'Meta do mês',
+      value: '5 módulos',
+      description: '2 concluídos até agora',
+      icon: 'target',
+    },
+  ];
+
+  const handlePlayFeatured = () => {
+    /* TODO: integrar player */
+    console.log('Assistir módulo destaque');
+  };
+
+  const handleMoreInfo = () => {
+    console.log('Abrir modal de detalhes');
+  };
+
+  const handleSaveCourse = () => {
+    console.log('Salvar curso na lista');
+  };
 
   return (
-    <div className="min-h-screen bg-neutral-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#040608] via-[#05080d] to-[#020305] text-white">
       <InternalNavigation />
 
-      {/* Featured Hero Section */}
-      <section className="relative h-[70vh] min-h-[600px] overflow-hidden">
-        {/* Background with gradient overlay */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-neutral-900 via-neutral-900/50 to-transparent z-10"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/30 to-transparent z-10"></div>
+      <div className="mx-auto w-full max-w-7xl space-y-16 px-4 pb-20 pt-16 sm:px-6 lg:px-8">
+        <DashboardHero
+          course={mockFeaturedCourse}
+          highlights={heroHighlights}
+          isMuted={isMuted}
+          onToggleMuted={() => setIsMuted((prev) => !prev)}
+          onPlay={handlePlayFeatured}
+          onMoreInfo={handleMoreInfo}
+          onSaveCourse={handleSaveCourse}
+        />
 
-          {/* Hero Background Image/Video */}
-          <div className="absolute inset-0">
-            <img
-              src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1920&h=1080&fit=crop"
-              alt="Featured course background"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-500/20 to-transparent"></div>
-          </div>
-        </div>
+        <DashboardStatsRow stats={dashboardStats} />
 
-        {/* Hero Content */}
-        <div className="relative z-20 h-full flex items-end">
-          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-            <div className="max-w-2xl">
-              {/* Badge */}
-              <div className="inline-flex items-center space-x-2 px-3 py-1 bg-brand-500/20 border border-brand-500/50 rounded-full mb-4">
-                <span className="text-brand-400 text-xs font-semibold uppercase tracking-wider">Curso Destaque</span>
-                <span className="text-brand-300 text-xs">•</span>
-                <span className="text-brand-400 text-xs font-semibold">Novo</span>
-              </div>
-
-              {/* Title */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-4 leading-tight">
-                {mockFeaturedCourse.title}
-              </h1>
-
-              {/* Description */}
-              <p className="text-lg sm:text-xl text-neutral-200 mb-6 leading-relaxed max-w-xl">
-                {mockFeaturedCourse.description}
-              </p>
-
-              {/* Metadata */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-300 mb-8">
-                <span className="flex items-center space-x-1">
-                  <span className="text-brand-400">⭐</span>
-                  <span>{mockFeaturedCourse.rating}</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <span>{mockFeaturedCourse.studentsCount.toLocaleString('pt-BR')} alunos</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <span>{Math.floor(mockFeaturedCourse.duration / 60)}h {mockFeaturedCourse.duration % 60}min</span>
-                </span>
-                <span className="px-2 py-1 bg-neutral-700/50 rounded-md text-xs font-medium uppercase">
-                  {mockFeaturedCourse.level}
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="flex items-center space-x-2 px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-brand-500/25"
-                >
-                  <Play className="w-5 h-5 fill-current" />
-                  <span>Assistir Agora</span>
-                </button>
-
-                <button className="flex items-center space-x-2 px-8 py-3 bg-neutral-700/50 hover:bg-neutral-700 text-white font-semibold rounded-lg transition-all duration-300 backdrop-blur-sm border border-neutral-600">
-                  <Info className="w-5 h-5" />
-                  <span>Mais Informações</span>
-                </button>
-
-                <button className="p-3 bg-neutral-700/50 hover:bg-neutral-700 text-white rounded-lg transition-all duration-300 backdrop-blur-sm border border-neutral-600">
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Hero Controls (optional for background video) */}
-        <button
-          onClick={() => setIsMuted(!isMuted)}
-          className="absolute bottom-8 right-8 z-30 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
-        >
-          {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-        </button>
-      </section>
-
-      {/* Main Content */}
-      <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Continue Watching Section */}
         {mockContinueWatching.length > 0 && (
-          <section className="mb-12">
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.85)] backdrop-blur">
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.28em] text-primary">Continue de onde parou</p>
+                <h2 className="text-2xl font-bold text-white">Retomar suas aulas</h2>
+              </div>
+              <button
+                type="button"
+                className="self-start rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-neutral-300 transition-colors duration-200 hover:border-primary/40 hover:text-white"
+              >
+                Ver histórico
+              </button>
+            </div>
             <ContinueWatching videos={mockContinueWatching} />
           </section>
         )}
 
-        {/* Course Categories */}
         {mockCategories.map((category, index) => (
-          <section key={category.id} className={`mb-12 ${index === 0 ? '' : ''}`}>
+          <section
+            key={category.id}
+            className="rounded-[2.25rem] border border-white/10 bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-transparent p-6 shadow-[0_25px_80px_-60px_rgba(0,0,0,0.85)] backdrop-blur"
+          >
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.28em] text-primary">
+                  {index === 0 ? 'Trilhas para acelerar' : index === 1 ? 'Especialista responde' : 'Para o seu momento'}
+                </p>
+                <h2 className="text-2xl font-bold text-white">{category.title}</h2>
+              </div>
+              <a
+                href={`/app/cursos?categoria=${category.id}`}
+                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-neutral-300 transition-colors duration-200 hover:border-primary/40 hover:text-white"
+              >
+                Ver tudo
+              </a>
+            </div>
             <ContentCarousel
-              title={category.title}
+              title=""
               courses={category.courses}
-              seeAllHref={`/app/cursos?categoria=${category.id}`}
+              itemsPerPage={4}
             />
           </section>
         ))}
 
-        {/* Recommendations Section */}
-        <section className="mb-12">
+        <section className="rounded-[2.25rem] border border-white/10 bg-gradient-to-br from-primary/10 via-transparent to-transparent p-6 shadow-[0_25px_80px_-65px_rgba(0,200,150,0.65)] backdrop-blur">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.28em] text-primary">Recomendações 360º</p>
+              <h2 className="text-2xl font-bold text-white">Feito para você</h2>
+            </div>
+            <a
+              href="/app/cursos"
+              className="rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-primary transition-colors duration-200 hover:bg-primary/20 hover:text-white"
+            >
+              Explorar catálogo
+            </a>
+          </div>
           <ContentCarousel
-            title="Recomendados Para Você"
-            courses={mockCategories.flatMap(cat => cat.courses).slice(0, 6)}
-            seeAllHref="/app/cursos"
+            title=""
+            courses={mockCategories.flatMap((cat) => cat.courses).slice(0, 6)}
+            itemsPerPage={4}
           />
         </section>
-
-        {/* Popular This Week */}
-        <section className="mb-12">
-          <ContentCarousel
-            title="Populares Esta Semana"
-            courses={mockCategories.flatMap(cat => cat.courses).slice(6, 12)}
-            seeAllHref="/app/cursos?ordenar=popularidade"
-          />
-        </section>
-      </main>
-
-      {/* Footer spacing */}
-      <div className="h-8"></div>
+      </div>
     </div>
   );
 }

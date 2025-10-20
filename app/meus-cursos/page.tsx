@@ -8,12 +8,13 @@ import Navbar from '@/components/Navbar';
 export default function MeusCursosPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const isDevelopment = process.env.NODE_ENV !== 'production';
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isDevelopment) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isDevelopment]);
 
   if (loading) {
     return (
@@ -25,7 +26,7 @@ export default function MeusCursosPage() {
     );
   }
 
-  if (!user) return null;
+  if (!user && !isDevelopment) return null;
 
   return (
     <div className="bg-dark text-white min-vh-100">

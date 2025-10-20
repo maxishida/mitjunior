@@ -18,12 +18,14 @@ export default function ContinueWatchingPage() {
   const { user, loading: authLoading } = useAuth();
   const { items, loading: progressLoading, error } = useContinueWatching(user?.uid);
   const router = useRouter();
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const canAccess = Boolean(user) || isDevelopment;
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !isDevelopment) {
       router.push('/login');
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, isDevelopment]);
 
   if (authLoading || progressLoading) {
     return (
@@ -33,7 +35,7 @@ export default function ContinueWatchingPage() {
     );
   }
 
-  if (!user) {
+  if (!canAccess) {
     return null; // Will redirect
   }
 

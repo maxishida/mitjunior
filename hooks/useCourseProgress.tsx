@@ -22,7 +22,13 @@ export function useCourseProgress(userId: string | undefined, courseId: string) 
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!userId || !courseId) return;
+    if (!userId || !courseId) {
+      setCourseProgress(null);
+      setVideos([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
     setLoading(true);
 

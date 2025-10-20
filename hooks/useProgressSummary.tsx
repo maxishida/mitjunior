@@ -19,7 +19,12 @@ export function useProgressSummary(userId: string | undefined) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setSummary(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
     setLoading(true);
 

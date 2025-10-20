@@ -8,12 +8,14 @@ import { useEffect } from 'react';
 export default function OnboardingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const canRender = Boolean(user) || isDevelopment;
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isDevelopment) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isDevelopment]);
 
   if (loading) {
     return (
@@ -26,7 +28,7 @@ export default function OnboardingPage() {
     );
   }
 
-  if (!user) {
+  if (!canRender) {
     return null;
   }
 
